@@ -12,8 +12,8 @@ def get_db_connection():
 
 def init_db():
     conn = get_db_connection()
-    with open('schema.sql') as file:
-        conn.executescript(file.read())
+    with open('schema.sql') as f:
+        conn.executescript(f.read())
     conn.commit()
     conn.close()
     print("Database initialized.")
@@ -81,3 +81,4 @@ else:
         init_db()
     else:
         conn.close()
+    
