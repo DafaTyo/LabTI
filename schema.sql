@@ -13,4 +13,4 @@ CREATE TABLE mahasiswa (
     nim TEXT UNIQUE NOT NULL
 );
 
-INSERT INTO users (username, password) VALUES ('admin', 'password123');
+INSERT INTO users (username, password) VALUES ('admin', 'admin123');
