@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, g
+from flask import Flask, render_template, request, redirect, url_for, session, flash, g, jsonify
 from werkzeug.routing import Map, Rule
 from dotenv import load_dotenv
 import os
@@ -49,9 +49,11 @@ def view_login():
 @login_required
 def view_dashboard():
     total_mahasiswa = models.count_mahasiswa()
+    mahasiswa_data = models.get_all_mahasiswa()
     return render_template('dashboard.html',
                            user=session['username'],
-                           total_mahasiswa=total_mahasiswa)
+                           total_mahasiswa=total_mahasiswa,
+                           mahasiswa_list=mahasiswa_data)
 
 @login_required
 def view_logout():
@@ -67,51 +69,35 @@ def view_mahasiswa_index():
 
 @login_required
 def view_add_mahasiswa():
-    if request.method == 'POST':
-        nama = request.form['nama']
-        nim = request.form['nim']
-        if not nama or not nim:
-            flash("Nama dan NIM tidak boleh kosong.", "warning")
-            return render_template('mahasiswa/add.html', mahasiswa={'nama': nama, 'nim': nim})
-        if models.add_mahasiswa_db(nama, nim):
-            flash(f"Mahasiswa '{nama}' berhasil ditambahkan.", "success")
-            return redirect(url_for('mahasiswa_index'))
-        else:
-            flash(f"Gagal menambahkan mahasiswa. NIM '{nim}' mungkin sudah ada.", "danger")
-            return render_template('mahasiswa/add.html', mahasiswa={'nama': nama, 'nim': nim})
-    return render_template('mahasiswa/add.html', mahasiswa=None)
+    nama = request.form['nama']
+    nim = request.form['nim']
+    if not nama or not nim:
+        return jsonify(success=False, message="Nama dan NIM tidak boleh kosong.")
+    if models.add_mahasiswa_db(nama, nim):
+        return jsonify(success=True)
+    else:
+        jsonify(success=False, message="NIM sudah digunakan.")
 
 @login_required
-def view_update_mahasiswa(mahasiswa_id):
-    mhs = models.get_mahasiswa_by_id(mahasiswa_id)
-    if not mhs:
-        flash("Mahasiswa tidak ditemukan.", "danger")
-        return redirect(url_for('mahasiswa_index'))
-    if request.method == 'POST':
-        nama = request.form['nama']
-        nim = request.form['nim']
-        if not nama or not nim:
-            flash("Nama dan NIM tidak boleh kosong.", "warning")
-            return render_template('mahasiswa/update.html', mahasiswa={'id': mahasiswa_id, 'nama': nama, 'nim': nim})
-        if models.update_mahasiswa_db(mahasiswa_id, nama, nim):
-            flash(f"Mahasiswa '{nama}' berhasil diupdate.", "success")
-            return redirect(url_for('mahasiswa_index'))
-        else:
-            flash(f"Gagal mengupdate mahasiswa. NIM '{nim}' mungkin sudah digunakan mahasiswa lain.", "danger")
-            return render_template('mahasiswa/update.html', mahasiswa={'id': mahasiswa_id, 'nama': nama, 'nim': nim})
-    return render_template('mahasiswa/update.html', mahasiswa=mhs)
+def view_update_mahasiswa():
+    mahasiswa_id = request.form['id']
+    nama = request.form['nama']
+    nim = request.form['nim']
+    if not nama or not nim:
+        return jsonify(success=False, message="Nama dan NIM tidak boleh kosong.")
+    if models.update_mahasiswa_db(mahasiswa_id, nama, nim):
+        return jsonify(success=True)
+    else:
+        jsonify(success=False, message="NIM sudah digunakan.")
 
 @login_required
-def view_delete_mahasiswa(mahasiswa_id):
+def view_delete_mahasiswa():
+    mahasiswa_id = request.form['id']
     mhs = models.get_mahasiswa_by_id(mahasiswa_id)
     if not mhs:
-        flash("Mahasiswa tidak ditemukan.", "danger")
-        return redirect(url_for('mahasiswa_index'))
-    if request.method == 'POST':
-        models.delete_mahasiswa_db(mahasiswa_id)
-        flash(f"Mahasiswa '{mhs['nama']}' berhasil dihapus.", "success")
-        return redirect(url_for('mahasiswa_index'))
-    return render_template('mahasiswa/delete.html', mahasiswa=mhs)
+        return jsonify(success=False, message="Mahasiswa tidak ditemukan.")
+    models.delete_mahasiswa_db(mahasiswa_id)
+    return jsonify(success=True)
 
 app.add_url_rule('/', endpoint='home', view_func=view_home)
 app.add_url_rule('/login', endpoint='login', view_func=view_login, methods=['GET', 'POST'])
@@ -119,8 +105,8 @@ app.add_url_rule('/dashboard', endpoint='dashboard', view_func=view_dashboard)
 app.add_url_rule('/logout', endpoint='logout', view_func=view_logout)
 app.add_url_rule('/mahasiswa/', endpoint='mahasiswa_index', view_func=view_mahasiswa_index)
 app.add_url_rule('/mahasiswa/add', endpoint='add_mahasiswa', view_func=view_add_mahasiswa, methods=['GET', 'POST'])
-app.add_url_rule('/mahasiswa/delete/<int:mahasiswa_id>', endpoint='delete_mahasiswa', view_func=view_delete_mahasiswa, methods=['GET', 'POST'])
-app.add_url_rule('/mahasiswa/update/<int:mahasiswa_id>', endpoint='update_mahasiswa', view_func=view_update_mahasiswa, methods=['GET', 'POST'])
+app.add_url_rule('/mahasiswa/delete/', endpoint='delete_mahasiswa', view_func=view_delete_mahasiswa, methods=['GET', 'POST'])
+app.add_url_rule('/mahasiswa/update/', endpoint='update_mahasiswa', view_func=view_update_mahasiswa, methods=['GET', 'POST'])
 
 if __name__ == '__main__':
     db_path = os.getenv("DATABASE_URL", "database.db")

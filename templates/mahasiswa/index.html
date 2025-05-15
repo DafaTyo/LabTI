@@ -3,66 +3,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daftar Mahasiswa - Sistem Akademik</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Data Mahasiswa - Sistem Akademik</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.12/sweetalert2.all.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.7.12/sweetalert2.min.css">
 </head>
-<body>
-    <header class="app-header">
-        <h1>Sistem Informasi Akademik</h1>
-    </header>
+<body class="bg-gray-100 min-h-screen">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-md">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold text-gray-800">AP2B</h1>
+            </div>
+            <nav class="mt-6">
+                <ul>
+                    <li class="px-6 py-3">
+                        <a href="{{ url_for('dashboard') }}" class="flex items-center text-gray-600 hover:text-blue-500">
+                            <i class="fas fa-home mr-3"></i>
+                            <span>Main Page</span>
+                        </a>
+                    </li>
+                    <li class="px-6 py-3 bg-blue-50">
+                        <a href="{{ url_for('mahasiswa_index') }}" class="flex items-center text-blue-600 font-medium">
+                            <i class="fas fa-list mr-3"></i>
+                            <span>Data Mahasiswa</span>
+                        </a>
+                    </li>
+                    <li class="px-6 py-3">
+                        <a href="{{ url_for('logout') }}" class="flex items-center text-gray-600 hover:text-red-500">
+                            <i class="fa-solid fa-power-off mr-3"></i>
+                            <span>Logout</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
 
-    <nav class="app-nav">
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        <a href="{{ url_for('mahasiswa_index') }}">Data Mahasiswa</a>
-        <a href="{{ url_for('logout') }}">Logout ({{ session.username }})</a>
-    </nav>
-
-    <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <h1 class="page-title">Daftar Mahasiswa</h1>
-        <p><a href="{{ url_for('add_mahasiswa') }}" class="btn">Tambah Mahasiswa Baru</a></p>
-
-        {% if mahasiswa_list and mahasiswa_list|length > 0 %}
-        <table>
-            <thead>
-                <tr>
-                    <th>No.</th>
-                    <th>Nama</th>
-                    <th>NIM</th>
-                    <th>Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for mhs in mahasiswa_list %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ mhs.nama }}</td>
-                    <td>{{ mhs.nim }}</td>
-                    <td class="actions">
-                        <a href="{{ url_for('update_mahasiswa', mahasiswa_id=mhs.id) }}" class="update-link">Update</a>
-                        <a href="{{ url_for('delete_mahasiswa', mahasiswa_id=mhs.id) }}" class="delete-link">Delete</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p>Belum ada data mahasiswa. Silakan tambahkan mahasiswa baru.</p>
-        {% endif %}
-        
-        <br>
-        <a href="{{ url_for('dashboard') }}" class="btn">Kembali ke Dashboard</a>
+        <!-- Main Content -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto">
+            <div class="p-6">
+                <div class="bg-white rounded-md shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800">Data Mahasiswa</h2>
+                        <div class="flex gap-2">
+                            <button id="btnTambah" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Tambah
+                            </button>
+                        </div>
+                    </div>                    
+                    <!-- Data Table -->
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-800 text-white">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                        No
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                        NIM
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                        Nama Mahasiswa
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                {% for mahasiswa in mahasiswa_list %}
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ loop.index }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mahasiswa.nim }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ mahasiswa.nama }}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
+                                        <button 
+                                            class="text-blue-600 hover:text-blue-900 mr-3 btn-edit"
+                                            data-id="{{ mahasiswa.id }}"
+                                            data-nim="{{ mahasiswa.nim }}"
+                                            data-nama="{{ mahasiswa.nama }}">
+                                            Edit
+                                        </button>
+                                        <button 
+                                            class="text-red-600 hover:text-red-900 btn-delete"
+                                            data-id="{{ mahasiswa.id }}"
+                                            data-nama="{{ mahasiswa.nama }}">
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not mahasiswa_list %}
+                                <tr>
+                                    <td colspan="4" class="px-6 py-4 text-center text-gray-500">Tidak ada data mahasiswa</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <footer class="app-footer">
-        <p>© {{ g.year if g and g.year else '2024' }} My Simple Flask App</p>
-    </footer>
+    <script>
+        // Tambah Mahasiswa
+        document.getElementById('btnTambah').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Tambah Data Mahasiswa',
+                html: `
+                    <form id="formTambah" action="{{ url_for('add_mahasiswa') }}" method="post">
+                        <div class="mb-4">
+                            <label for="nim" class="block text-left mb-1">NIM</label>
+                            <input type="text" id="nim" name="nim" class="w-full px-3 py-2 border rounded-md" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="nama" class="block text-left mb-1">Nama Mahasiswa</label>
+                            <input type="text" id="nama" name="nama" class="w-full px-3 py-2 border rounded-md" required>
+                        </div>
+                    </form>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Simpan',
+                cancelButtonText: 'Batal',
+                focusConfirm: false,
+                preConfirm: () => {
+                    const nim = document.getElementById('nim').value;
+                    const nama = document.getElementById('nama').value;
+                    
+                    if (!nim || !nama) {
+                        Swal.showValidationMessage('NIM dan Nama harus diisi');
+                        return false;
+                    }
+                    
+                    return { nim, nama };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // AJAX
+                    const formData = new FormData();
+                    formData.append('nim', result.value.nim);
+                    formData.append('nama', result.value.nama);
+                    
+                    fetch("{{ url_for('add_mahasiswa') }}", {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil',
+                                text: 'Data mahasiswa berhasil ditambahkan',
+                                timer: 1500,
+                                showConfirmButton: false
+                            }).then(() => {
+                                window.location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Gagal',
+                                text: data.message || 'Terjadi kesalahan saat menambahkan data'
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Terjadi kesalahan pada server'
+                        });
+                        console.error('Error:', error);
+                    });
+                }
+            });
+        });
+
+        // Edit Mahasiswa
+        document.querySelectorAll('.btn-edit').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const nim = this.dataset.nim;
+                const nama = this.dataset.nama;
+                
+                Swal.fire({
+                    title: 'Edit Data Mahasiswa',
+                    html: `
+                        <form id="formEdit" action="{{ url_for('update_mahasiswa') }}" method="post">
+                            <input type="hidden" id="edit_id" name="id" value="${id}">
+                            <div class="mb-4">
+                                <label for="edit_nim" class="block text-left mb-1">NIM</label>
+                                <input type="text" id="edit_nim" name="nim" class="w-full px-3 py-2 border rounded-md" value="${nim}" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="edit_nama" class="block text-left mb-1">Nama Mahasiswa</label>
+                                <input type="text" id="edit_nama" name="nama" class="w-full px-3 py-2 border rounded-md" value="${nama}" required>
+                            </div>
+                        </form>
+                    `,
+                    showCancelButton: true,
+                    confirmButtonText: 'Update',
+                    cancelButtonText: 'Batal',
+                    focusConfirm: false,
+                    preConfirm: () => {
+                        const editId = document.getElementById('edit_id').value;
+                        const editNim = document.getElementById('edit_nim').value;
+                        const editNama = document.getElementById('edit_nama').value;
+                        
+                        if (!editNim || !editNama) {
+                            Swal.showValidationMessage('NIM dan Nama harus diisi');
+                            return false;
+                        }
+                        
+                        return { id: editId, nim: editNim, nama: editNama };
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Submit form via AJAX
+                        const formData = new FormData();
+                        formData.append('id', result.value.id);
+                        formData.append('nim', result.value.nim);
+                        formData.append('nama', result.value.nama);
+                        
+                        fetch("{{ url_for('update_mahasiswa') }}", {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil',
+                                    text: 'Data mahasiswa berhasil diperbarui',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Gagal',
+                                    text: data.message || 'Terjadi kesalahan saat memperbarui data'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Terjadi kesalahan pada server'
+                            });
+                            console.error('Error:', error);
+                        });
+                    }
+                });
+            });
+        });
+
+        // Delete Mahasiswa
+        document.querySelectorAll('.btn-delete').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const nama = this.dataset.nama;
+                
+                Swal.fire({
+                    title: 'Konfirmasi Hapus',
+                    text: `Anda yakin ingin menghapus mahasiswa "${nama}"?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Submit delete request via AJAX
+                        const formData = new FormData();
+                        formData.append('id', id);
+                        
+                        fetch("{{ url_for('delete_mahasiswa') }}", {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil',
+                                    text: 'Data mahasiswa berhasil dihapus',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Gagal',
+                                    text: data.message || 'Terjadi kesalahan saat menghapus data'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'Terjadi kesalahan pada server'
+                            });
+                            console.error('Error:', error);
+                        });
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
