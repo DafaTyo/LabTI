@@ -31,7 +31,7 @@
                             <span>Data Mahasiswa</span>
                         </a>
                     </li>
-                    <li class="px-6 py-3">
+                    <li class="btn-logout px-6 py-3">
                         <a href="{{ url_for('logout') }}" class="flex items-center text-gray-600 hover:text-red-500">
                             <i class="fa-solid fa-power-off mr-3"></i>
                             <span>Logout</span>
@@ -321,6 +321,24 @@
                         });
                     }
                 });
+            });
+        });
+
+        // Logout
+        document.querySelector('.btn-logout').addEventListener('click', function() {
+            Swal.fire({
+                title: 'Konfirmasi Logout',
+                text: 'Anda yakin ingin logout?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Logout!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{{ url_for('logout') }}";
+                }
             });
         });
     </script>

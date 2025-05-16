@@ -40,10 +40,9 @@ def view_login():
         if user and user['password'] == password:
             session['user_id'] = user['id']
             session['username'] = user['username']
-            flash(f"Welcome back, {user['username']}!", "success")
-            return redirect(url_for('dashboard'))
+            return jsonify(success=True)
         else:
-            flash("Login Gagal. Username atau password salah.", "danger")
+            return jsonify(success=False, message="Login Gagal. Username atau password salah.")
     return render_template('login.html')
 
 @login_required
@@ -59,7 +58,6 @@ def view_dashboard():
 def view_logout():
     session.pop('user_id', None)
     session.pop('username', None)
-    flash("You have been logged out.", "info")
     return redirect(url_for('login'))
 
 @login_required
