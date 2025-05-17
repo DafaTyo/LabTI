@@ -1,1 +1,1 @@
-#Halo bang Yoga🙂
+#Selama praktikum dari pertemuan 1 sampai pertemuan 6 saya belajar python
